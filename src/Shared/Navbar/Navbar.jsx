@@ -56,7 +56,7 @@ const NavBar = () => {
 
 
     return (
-        <div className="navbar  mx-auto z-10 text-white bg-gradient-to-r from-sky-500 to-sky-400 p-10 ">
+        <div className="navbar fixed  mx-auto z-10 text-white bg-gradient-to-r from-blue-950 to-sky-400 p-10 ">
             {/* <Helmet>
                 <title>Home</title>
                 <meta name="description" content="Your website description" />
@@ -75,7 +75,7 @@ const NavBar = () => {
                 <Link to='/' className="btn btn-ghost normal-case text-xl">
                     <div className='flex flex-col lg:flex-row text-center items-center' >
                         
-                        <span className="mr-2 text-purple-900">Task<span className="text-blue-900">Management</span></span>
+                        <span className="mr-2 text-gray-300">Task Management</span>
                     </div>
                 </Link>
             </div>
