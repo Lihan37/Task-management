@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import UseAxiosPublic from '../hooks/UseAxiosPublic';
 import Swal from 'sweetalert2';
-
+import { useNavigate } from 'react-router-dom';
 
 const DashBoard = () => {
     const [tasks, setTasks] = useState([]);
@@ -13,6 +13,8 @@ const DashBoard = () => {
     const { register, handleSubmit, reset } = useForm();
     const [draggedTask, setDraggedTask] = useState(null);
     const axiosPublic = UseAxiosPublic();
+    const navigate = useNavigate();
+
 
     useEffect(() => {
         const fetchTasks = async () => {
@@ -27,16 +29,12 @@ const DashBoard = () => {
             }
         };
 
-
         fetchTasks();
-
 
         const intervalId = setInterval(fetchTasks, 5000);
 
-
         return () => clearInterval(intervalId);
     }, []);
-
 
     const onDragStart = (event, task) => {
         event.dataTransfer.setData('text/plain', task._id);
@@ -101,7 +99,6 @@ const DashBoard = () => {
                     status: statusMapping[targetList],
                 });
 
-
                 // Update the state with the modified task lists
                 setTasks(updatedTasks);
                 switch (targetList) {
@@ -128,105 +125,136 @@ const DashBoard = () => {
 
     const onSubmit = async (data) => {
         try {
-            const newTask = {
-                title: data.title,
-                description: data.description,
-                deadline: data.deadline,
-                priority: data.priority,
-                status: 'to-do',
-            };
-
-            const response = await axiosPublic.post('http://localhost:5000/tasks', newTask);
-
-
-            const insertedId = response.data.insertedTask._id;
-
-
-            const insertedTaskResponse = await axiosPublic.get(`http://localhost:5000/tasks/${insertedId}`);
-
-
-            setTasks([...tasks, insertedTaskResponse.data]);
-            switch (insertedTaskResponse.data.status) {
-                case 'to-do':
-                    setToDoTasks([...toDoTasks, insertedTaskResponse.data]);
-                    break;
-                case 'ongoing':
-                    setOngoingTasks([...ongoingTasks, insertedTaskResponse.data]);
-                    break;
-                case 'completed':
-                    setCompletedTasks([...completedTasks, insertedTaskResponse.data]);
-                    break;
-                default:
-                    break;
-            }
-
-            reset();
+          const newTask = {
+            title: data.title,
+            description: data.description,
+            deadline: data.deadline,
+            priority: data.priority,
+            status: 'to-do',
+          };
+    
+          const response = await axiosPublic.post('http://localhost:5000/tasks', newTask);
+    
+          const insertedId = response.data.insertedTask._id;
+    
+          const insertedTaskResponse = await axiosPublic.get(`http://localhost:5000/tasks/${insertedId}`);
+    
+          setTasks([...tasks, insertedTaskResponse.data]);
+          switch (insertedTaskResponse.data.status) {
+            case 'to-do':
+              setToDoTasks([...toDoTasks, insertedTaskResponse.data]);
+              break;
+            case 'ongoing':
+              setOngoingTasks([...ongoingTasks, insertedTaskResponse.data]);
+              break;
+            case 'completed':
+              setCompletedTasks([...completedTasks, insertedTaskResponse.data]);
+              break;
+            default:
+              break;
+          }
+    
+          reset();
+    
+          // Show success message with SweetAlert
+          Swal.fire({
+            icon: 'success',
+            title: 'Task Added Successfully!',
+            showConfirmButton: true,
+            confirmButtonText: 'OK',
+          });
         } catch (error) {
-            console.error('Error creating task:', error);
+          console.error('Error creating task:', error);
+    
+          // Show error modal if needed
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Error adding task. Please try again.',
+          });
         }
-    };
-
-
-    const onDelete = async (taskId) => {
+      };
+    
+      const onDelete = async (taskId) => {
         try {
-            const response = await axios.delete(`http://localhost:5000/tasks/${taskId}`);
-            console.log('Delete Response:', response.data);
-
-            const updatedTasks = tasks.filter((task) => task._id !== taskId);
-            setTasks(updatedTasks);
-            setToDoTasks(updatedTasks.filter(task => task.status === 'to-do'));
-            setOngoingTasks(updatedTasks.filter(task => task.status === 'ongoing'));
-            setCompletedTasks(updatedTasks.filter(task => task.status === 'completed'));
+          const response = await axios.delete(`http://localhost:5000/tasks/${taskId}`);
+          console.log('Delete Response:', response.data);
+    
+          const updatedTasks = tasks.filter((task) => task._id !== taskId);
+          setTasks(updatedTasks);
+          setToDoTasks(updatedTasks.filter(task => task.status === 'to-do'));
+          setOngoingTasks(updatedTasks.filter(task => task.status === 'ongoing'));
+          setCompletedTasks(updatedTasks.filter(task => task.status === 'completed'));
+    
+          // Show success message with SweetAlert
+          Swal.fire({
+            icon: 'success',
+            title: 'Task Deleted Successfully!',
+            showConfirmButton: true,
+            confirmButtonText: 'OK',
+          });
         } catch (error) {
-            console.error('Error deleting task:', error);
+          console.error('Error deleting task:', error);
+    
+          // Show error modal if needed
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Error deleting task. Please try again.',
+          });
         }
-    };
+      };
 
     return (
-
         <div>
-            
             <div className="container mx-auto mt-8">
-                <h1 className="text-3xl font-semibold mb-4">Task Management Dashboard</h1>
-                <form onSubmit={handleSubmit(onSubmit)} className="mb-4">
-                    <label className="block mb-2">
-                        Title:
-                        <input
-                            type="text"
-                            {...register('title', { required: true })}
-                            className="border p-2"
-                        />
-                    </label>
-                    <label className="block mb-2">
-                        Description:
-                        <textarea {...register('description')} className="border p-2"></textarea>
-                    </label>
-                    <label className="block mb-2">
-                        Deadline:
-                        <input
-                            type="date"
-                            {...register('deadline')}
-                            className="border p-2"
-                        />
-                    </label>
-                    <label className="block mb-2">
-                        Priority:
-                        <select {...register('priority')} className="border p-2">
-                            <option value="low">Low</option>
-                            <option value="moderate">Moderate</option>
-                            <option value="high">High</option>
-                        </select>
-                    </label>
-                    <button type="submit" className="bg-blue-500 text-white p-2">
-                        Add Task
-                    </button>
-                </form>
+                <h1 className="text-3xl lg:text-6xl text-center
+                 font-semibold mb-10">Task Management Dashboard</h1>
+                <div className="max-w-md mx-auto bg-white p-8 rounded-md shadow-lg mb-5">
+                    <form onSubmit={handleSubmit(onSubmit)} className="mb-4">
+                        <label className="block mb-2">
+                            Title:
+                            <input
+                                type="text"
+                                {...register('title', { required: true })}
+                                className="w-full border p-2"
+                            />
+                        </label>
+                        <label className="block mb-2">
+                            Description:
+                            <textarea {...register('description')} className="w-full border p-2"></textarea>
+                        </label>
+                        <label className="block mb-2">
+                            Deadline:
+                            <input
+                                type="date"
+                                {...register('deadline')}
+                                className="w-full border p-2"
+                            />
+                        </label>
+                        <label className="block mb-2">
+                            Priority:
+                            <select {...register('priority')} className="w-full border p-2">
+                                <option value="low">Low</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="high">High</option>
+                            </select>
+                        </label>
+                        <button type="submit" className="bg-blue-500 text-white p-2 w-full">
+                            Add Task
+                        </button>
+                    </form>
+                </div>
 
-
-                <div className="flex space-x-4">
+                <div className="flex flex-wrap gap-4">
                     {/* To-Do List */}
-                    <div onDragOver={(event) => onDragOver(event)} onDrop={(event) => onDrop(event, 'toDo')} className="border p-4 flex-grow">
+                    <div
+                        onDragOver={(event) => onDragOver(event)}
+                        onDrop={(event) => onDrop(event, 'toDo')}
+                        className="border p-4 flex-grow w-full sm:w-1/2 md:w-1/3"
+                    >
                         <h2 className="text-lg font-semibold mb-2">To-Do</h2>
+                        <p className="text-gray-600 mb-4">Your Pending Tasks.</p>
                         {toDoTasks.map((task) => (
                             <div
                                 key={task._id}
@@ -242,13 +270,24 @@ const DashBoard = () => {
                                 >
                                     Delete
                                 </button>
+                                <button
+                                    onClick={() => handleEdit(task._id)}
+                                    className="bg-blue-500 text-white p-2"
+                                >
+                                    Edit
+                                </button>
                             </div>
                         ))}
                     </div>
 
                     {/* Ongoing List */}
-                    <div onDragOver={(event) => onDragOver(event)} onDrop={(event) => onDrop(event, 'ongoing')} className="border p-4 flex-grow">
+                    <div
+                        onDragOver={(event) => onDragOver(event)}
+                        onDrop={(event) => onDrop(event, 'ongoing')}
+                        className="border p-4 flex-grow w-full sm:w-1/2 md:w-1/3"
+                    >
                         <h2 className="text-lg font-semibold mb-2">Ongoing</h2>
+                        <p className="text-gray-600 mb-4">Drag tasks here to mark them as "Ongoing".</p>
                         {ongoingTasks.map((task) => (
                             <div
                                 key={task._id}
@@ -264,13 +303,24 @@ const DashBoard = () => {
                                 >
                                     Delete
                                 </button>
+                                <button
+                                    onClick={() => handleEdit(task._id)}
+                                    className="bg-blue-500 text-white p-2"
+                                >
+                                    Edit
+                                </button>
                             </div>
                         ))}
                     </div>
 
                     {/* Completed List */}
-                    <div onDragOver={(event) => onDragOver(event)} onDrop={(event) => onDrop(event, 'completed')} className="border p-4 flex-grow">
+                    <div
+                        onDragOver={(event) => onDragOver(event)}
+                        onDrop={(event) => onDrop(event, 'completed')}
+                        className="border p-4 flex-grow w-full sm:w-1/2 md:w-1/3"
+                    >
                         <h2 className="text-lg font-semibold mb-2">Completed</h2>
+                        <p className="text-gray-600 mb-4">Drag tasks here to mark them as "Completed".</p>
                         {completedTasks.map((task) => (
                             <div
                                 key={task._id}
@@ -290,6 +340,7 @@ const DashBoard = () => {
                         ))}
                     </div>
                 </div>
+
             </div>
         </div>
     );
