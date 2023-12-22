@@ -1,21 +1,20 @@
 
 import { useContext } from 'react';
-import './navbar.css'
-
 import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../Providers/AuthProvider';
-
+import './navbar.css';
 
 const NavBar = () => {
-
     const location = useLocation();
-
     const { user, logOut } = useContext(AuthContext);
-    const handleSignOut = () => {
-        logOut()
-            .then()
-            .catch()
-    }
+
+    const handleSignOut = async () => {
+        try {
+            await logOut();
+        } catch (error) {
+            console.error('Error signing out:', error.message);
+        }
+    };
     const navItems = (
         <>
             <li>
